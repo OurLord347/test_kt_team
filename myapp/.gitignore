@@ -8,5 +8,5 @@
 /var/
 /vendor/
 /.idea/
-
+/public/public/
 ###< symfony/framework-bundle ###

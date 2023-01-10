@@ -17,6 +17,8 @@ services:
     depends_on:
       - mariadb
   mariadb:
+    ports:
+      - '33006:3306'
     image: 'bitnami/mariadb:10.3'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
