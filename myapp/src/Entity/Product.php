@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=ProductRepository::class)
+ * @ORM\HasLifecycleCallbacks
  */
 class Product
 {
@@ -28,7 +29,7 @@ class Product
     private $description;
 
     /**
-     * @ORM\Column(type="float")
+     * @ORM\Column(type="string", length=100)
      */
     private $weight;
 
@@ -65,12 +66,12 @@ class Product
         return $this;
     }
 
-    public function getWeight(): ?float
+    public function getWeight(): ?string
     {
         return $this->weight;
     }
 
-    public function setWeight(float $weight): self
+    public function setWeight(string $weight): self
     {
         $this->weight = $weight;
 
@@ -123,5 +124,15 @@ class Product
         $this->updated_at = $updated_at;
 
         return $this;
+    }
+
+    /**
+     * @ORM\PrePersist
+     * @ORM\PreUpdate
+     */
+    public function setCreatedAtValue(): void
+    {
+        $this->created_at = new \DateTimeImmutable() ?? $this->created_at;
+        $this->updated_at = new \DateTimeImmutable();
     }
 }
