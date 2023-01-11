@@ -21,6 +21,9 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+    App\Controller\ProductsController:
+        calls:
+            - [ setContainer, [ "@service_container" ] ]
     Payum\Bundle\PayumBundle\Controller\SyncController:
         calls:
             - method: setContainer

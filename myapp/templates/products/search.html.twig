@@ -1,1 +1,19 @@
 {{ form(form) }}
+<table>
+    <tr>
+        <td>Id продукта</td>
+        <td>Название</td>
+        <td>Вес</td>
+        <td>Тип</td>
+        <td>Описание</td>
+    </tr>
+{% for product in products %}
+    <tr>
+        <td>{{ product.id }}</td>
+        <td>{{ product.name }}</td>
+        <td>{{ product.weight }}</td>
+        <td>{{ product.categoryId.name }}</td>
+        <td>{{ product.description }}</td>
+    </tr>
+{% endfor %}
+</table>

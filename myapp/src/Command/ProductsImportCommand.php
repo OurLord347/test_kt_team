@@ -24,7 +24,8 @@ class ProductsImportCommand extends Command
     public function __construct(
         $projectDir,
         EntityManagerInterface $entityManager
-    ) {
+    )
+    {
         $this->projectDir = $projectDir;
         $this->entityManager = $entityManager;
         parent::__construct();
@@ -47,27 +48,27 @@ class ProductsImportCommand extends Command
         );
         $categorys = $query->getResult();
 
-        $serializer = new Serializer( [new ObjectNormalizer()], [new XmlEncoder()]);
+        $serializer = new Serializer([new ObjectNormalizer()], [new XmlEncoder()]);
         //todo рефакторинг но пока сдеалю просто то что требуется
         //Перебираю файлы для импорта
-        foreach ($files as $file){
+        foreach ($files as $file) {
             /* @var $file File */
-            $filePath = $this->projectDir.'/public/public/'.$file->getName();
-            $rows = $serializer->decode(file_get_contents($filePath),'xml');
+            $filePath = $this->projectDir . '/public/public/' . $file->getName();
+            $rows = $serializer->decode(file_get_contents($filePath), 'xml');
             //Сохраняю продукты
             $countPersist = 0;
-            foreach ($rows['product'] as $row){
+            foreach ($rows['product'] as $row) {
                 print_r($row);
                 /* @var $thisCategory Category */
                 //Ищу котегории
                 $thisCategory = null;
-                foreach ($categorys as $category){
+                foreach ($categorys as $category) {
                     /* @var $category Category */
-                    if($row['category'] == $category->getName()){
+                    if ($row['category'] == $category->getName()) {
                         $thisCategory = $category;
                     }
                 }
-                if(empty($thisCategory)){
+                if (empty($thisCategory)) {
                     $newCategory = new Category();
                     $newCategory->setName($row['category']);
                     $this->entityManager->persist($newCategory);
@@ -84,7 +85,7 @@ class ProductsImportCommand extends Command
                 $newProduct->setDescription($row['description']);
                 $this->entityManager->persist($newProduct);
                 //Чтоб снизить нагрузку на бд
-                if($countPersist >= 50){
+                if ($countPersist >= 50) {
                     $this->entityManager->flush();
                     $countPersist = 0;
                 }

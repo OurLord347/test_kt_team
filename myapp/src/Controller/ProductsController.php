@@ -21,7 +21,8 @@ class ProductsController extends AbstractController
 
     public function __construct(
         EntityManagerInterface $entityManager
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
     }
 
@@ -34,19 +35,33 @@ class ProductsController extends AbstractController
         $product = new Product();
 
         $form = $this->createFormBuilder($product)
-            ->add('name', TextType::class)
-            ->add('description', TextType::class)
-            ->add('weight', NumberType::class)
+            ->add('name', TextType::class, array('label' => 'Название', 'required' => false))
+            ->add('description', TextType::class, array('label' => 'Описание', 'required' => false))
+            ->add('weight', NumberType::class, array('label' => 'Вес', 'required' => false))
             ->add('save', SubmitType::class, ['label' => 'Поиск'])
             ->getForm();
 
         $form->handleRequest($request);
-        //С формами не работал оказалсоь тут не надо заморачиватся с валидацией
+        //С формами не работал оказалось тут не надо заморачиватся с валидацией
         if ($form->isSubmitted() && $form->isValid()) {
+            /* @var $product Product */
             $product = $form->getData();
+
+            //todo Да я знаю что это будет работать медленно
+            $query = $this->entityManager->getRepository(Product::class)->createQueryBuilder('p');
+            $query->where("p.description LIKE :description")
+                ->setParameter('description', "%" . $product->getDescription() . "%");
+            $query->andWhere("p.name LIKE :name")
+                ->setParameter('name', "%" . $product->getName() . "%");
+            //todo при стандартизации массы здесь можно будет легко избавится от полнотекстового поиска
+            $query->andWhere("p.weight LIKE :weight")
+                ->setParameter('weight', "%" . $product->getWeight() . "%");
+            $products = $query->getQuery()->getResult();
+
         }
         return $this->render('products/search.html.twig', [
             'form' => $form->createView(),
+            'products' => $products
         ]);
     }
 
@@ -61,10 +76,10 @@ class ProductsController extends AbstractController
             ->add('save', SubmitType::class, ['label' => 'Отправить'])
             ->getForm();
         $form->handleRequest($request);
-
+        //Просто сохраняю файл так как импорт будет идти в фоновом режиме
         if ($form->isSubmitted() && $form->isValid()) {
             $bytes = random_bytes(20);
-            $someNewFilename = bin2hex($bytes).'.xml';
+            $someNewFilename = bin2hex($bytes) . '.xml';
             $importFile = $form['attachment']->getData();
             $importFile->move('public', $someNewFilename);
             $file->setName($someNewFilename);
@@ -72,7 +87,7 @@ class ProductsController extends AbstractController
             $this->entityManager->persist($file);
             $this->entityManager->flush();
         }
-        return $this->render('products/search.html.twig', [
+        return $this->render('products/import.html.twig', [
             'form' => $form->createView(),
         ]);
     }
