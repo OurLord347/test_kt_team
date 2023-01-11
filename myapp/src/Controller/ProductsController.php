@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Category;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -10,10 +11,11 @@ use App\Entity\File;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Filter\ProductFilter;
 
 class ProductsController extends AbstractController
 {
@@ -31,34 +33,44 @@ class ProductsController extends AbstractController
      */
     public function index(Request $request): Response
     {
-        // создает объект задачи и инициализирует некоторые данные для этого примера
-        $product = new Product();
+        $repository = $this->entityManager
+            ->getRepository(Product::class);
 
-        $form = $this->createFormBuilder($product)
-            ->add('name', TextType::class, array('label' => 'Название', 'required' => false))
-            ->add('description', TextType::class, array('label' => 'Описание', 'required' => false))
-            ->add('weight', NumberType::class, array('label' => 'Вес', 'required' => false))
-            ->add('save', SubmitType::class, ['label' => 'Поиск'])
-            ->getForm();
+        $form = $this->get('form.factory')->create(ProductFilter::class);
 
-        $form->handleRequest($request);
-        //С формами не работал оказалось тут не надо заморачиватся с валидацией
-        if ($form->isSubmitted() && $form->isValid()) {
-            /* @var $product Product */
-            $product = $form->getData();
 
-            //todo Да я знаю что это будет работать медленно
-            $query = $this->entityManager->getRepository(Product::class)->createQueryBuilder('p');
-            $query->where("p.description LIKE :description")
-                ->setParameter('description', "%" . $product->getDescription() . "%");
-            $query->andWhere("p.name LIKE :name")
-                ->setParameter('name', "%" . $product->getName() . "%");
-            //todo при стандартизации массы здесь можно будет легко избавится от полнотекстового поиска
-            $query->andWhere("p.weight LIKE :weight")
-                ->setParameter('weight', "%" . $product->getWeight() . "%");
-            $products = $query->getQuery()->getResult();
+        if ($request->query->has($form->getName())) {
+            $form->submit($request->query->get($form->getName()));
 
+            $filterBuilder = $repository->createQueryBuilder("p");
+            $this->get('lexik_form_filter.query_builder_updater')->addFilterConditions($form, $filterBuilder);
+
+            //todo потом отрефакторить пока пусть так работает
+            if(!empty($_REQUEST['sortName']) && !empty($_REQUEST['sortType'])){
+                $sortName = $_REQUEST['sortName'];
+                $sortType = $_REQUEST['sortType'];
+                $sortNameArray = ['name', 'weight', 'category_id', 'description'];
+                if(
+                    in_array($sortType,['ASC','DESC'])
+                    && in_array($sortName, $sortNameArray)
+                ){
+
+                    $filterBuilder->orderBy('p.'.$sortName, $sortType);
+                }
+            }
+
+
+
+            $query = $filterBuilder->getQuery();
+            $form = $this->get('form.factory')->create(ProductFilter::class);
+
+            var_dump($filterBuilder->getDql());
+        } else {
+            $query = $repository->createQueryBuilder("p")
+                ->getQuery();
         }
+        $products = $query->getResult();
+
         return $this->render('products/search.html.twig', [
             'form' => $form->createView(),
             'products' => $products

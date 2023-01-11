@@ -1,4 +1,25 @@
 {{ form(form) }}
+{#Решение дурацкое но делать по нормальному долго#}
+<form method="POST" enctype="application/x-www-form-urlencoded">
+    <div>
+        <label for="sortName" class="required">Сортировка поле</label>
+        <select id="sortName" name="sortName">
+            <option value="name">name</option>
+            <option value="description">description</option>
+            <option value="weight">weight</option>
+            <option value="category_id">category_id</option>
+        </select>
+    </div>
+    <div>
+        <label for="sortType" class="required">Сортировка тип</label>
+        <select id="sortType" name="sortType">
+            <option value="ASC">ASC</option>
+            <option value="DESC">DESC</option></select>
+    </div>
+    <div>
+        <button type="submit" id="item_filter_save" name="item_filter[save]">Соритровка</button>
+    </div>
+</form>
 <table>
     <tr>
         <td>Id продукта</td>
@@ -17,3 +38,4 @@
     </tr>
 {% endfor %}
 </table>
+
