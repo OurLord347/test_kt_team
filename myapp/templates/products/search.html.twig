@@ -1,41 +1,40 @@
 {{ form(form) }}
-{#Решение дурацкое но делать по нормальному долго#}
-<form method="POST" enctype="application/x-www-form-urlencoded">
-    <div>
-        <label for="sortName" class="required">Сортировка поле</label>
-        <select id="sortName" name="sortName">
-            <option value="name">name</option>
-            <option value="description">description</option>
-            <option value="weight">weight</option>
-            <option value="category_id">category_id</option>
-        </select>
-    </div>
-    <div>
-        <label for="sortType" class="required">Сортировка тип</label>
-        <select id="sortType" name="sortType">
-            <option value="ASC">ASC</option>
-            <option value="DESC">DESC</option></select>
-    </div>
-    <div>
-        <button type="submit" id="item_filter_save" name="item_filter[save]">Соритровка</button>
-    </div>
-</form>
+{# total items count #}
+<div class="count">
+    {{ pagination.getTotalItemCount }}
+</div>
 <table>
     <tr>
-        <td>Id продукта</td>
-        <td>Название</td>
-        <td>Вес</td>
-        <td>Тип</td>
-        <td>Описание</td>
+        {# sorting of properties based on query components #}
+        <th>{{ knp_pagination_sortable(pagination, 'Id продукта', 'p.id') }}</th>
+        <th{% if pagination.isSorted('a.name') %} class="sorted"{% endif %}>
+            {{ knp_pagination_sortable(pagination, 'Название', 'p.name') }}
+        </th>
+        <th{% if pagination.isSorted('a.weight') %} class="sorted"{% endif %}>
+            {{ knp_pagination_sortable(pagination, 'Вес', 'p.weight') }}
+        </th>
+        <th{% if pagination.isSorted('a.name') %} class="sorted"{% endif %}>
+            {{ knp_pagination_sortable(pagination, 'Тип', 'p.category_id') }}
+        </th>
+        <th{% if pagination.isSorted('a.description') %} class="sorted"{% endif %}>
+            {{ knp_pagination_sortable(pagination, 'Описание', 'p.description') }}
+        </th>
+
     </tr>
-{% for product in products %}
-    <tr>
-        <td>{{ product.id }}</td>
-        <td>{{ product.name }}</td>
-        <td>{{ product.weight }}</td>
-        <td>{{ product.categoryId.name }}</td>
-        <td>{{ product.description }}</td>
-    </tr>
-{% endfor %}
+
+    {# table body #}
+    {% for article in pagination %}
+        <tr {% if loop.index is odd %}class="color"{% endif %}>
+            <td>{{ article.id }}</td>
+            <td>{{ article.name }}</td>
+            <td>{{ article.weight }}</td>
+            <td>{{ article.categoryId.name }}</td>
+            <td>{{ article.description }}</td>
+        </tr>
+    {% endfor %}
 </table>
+{# display navigation #}
+<div class="navigation">
+    {{ knp_pagination_render(pagination) }}
+</div>
 

@@ -2,7 +2,7 @@ version: '2'
 
 services:
   myapp:
-    image: 'bitnami/symfony:1'
+    build: .
     ports:
       - '8000:8000'
     volumes:
@@ -18,7 +18,7 @@ services:
       - mariadb
   mariadb:
     ports:
-      - '33006:3306'
+      - '33006:33006'
     image: 'bitnami/mariadb:10.3'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes

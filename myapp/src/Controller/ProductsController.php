@@ -12,10 +12,12 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Filter\ProductFilter;
+use Knp\Component\Pager\PaginatorInterface;
 
 class ProductsController extends AbstractController
 {
@@ -31,7 +33,10 @@ class ProductsController extends AbstractController
     /**
      * @Route("/products", name="app_products")
      */
-    public function index(Request $request): Response
+    public function index(
+        Request $request,
+        PaginatorInterface $paginator
+    ): Response
     {
         $repository = $this->entityManager
             ->getRepository(Product::class);
@@ -45,35 +50,24 @@ class ProductsController extends AbstractController
             $filterBuilder = $repository->createQueryBuilder("p");
             $this->get('lexik_form_filter.query_builder_updater')->addFilterConditions($form, $filterBuilder);
 
-            //todo потом отрефакторить пока пусть так работает
-            if(!empty($_REQUEST['sortName']) && !empty($_REQUEST['sortType'])){
-                $sortName = $_REQUEST['sortName'];
-                $sortType = $_REQUEST['sortType'];
-                $sortNameArray = ['name', 'weight', 'category_id', 'description'];
-                if(
-                    in_array($sortType,['ASC','DESC'])
-                    && in_array($sortName, $sortNameArray)
-                ){
-
-                    $filterBuilder->orderBy('p.'.$sortName, $sortType);
-                }
-            }
-
-
-
             $query = $filterBuilder->getQuery();
             $form = $this->get('form.factory')->create(ProductFilter::class);
-
             var_dump($filterBuilder->getDql());
         } else {
             $query = $repository->createQueryBuilder("p")
                 ->getQuery();
         }
-        $products = $query->getResult();
+
+        $pagination = $paginator->paginate(
+            $query, /* query NOT result */
+            $request->query->getInt('page', 1), /*page number*/
+            10 /*limit per page*/
+        );
+
 
         return $this->render('products/search.html.twig', [
             'form' => $form->createView(),
-            'products' => $products
+            'pagination' => $pagination
         ]);
     }
 
@@ -82,6 +76,8 @@ class ProductsController extends AbstractController
      */
     public function import(Request $request): Response
     {
+        //Господи боже если это ктото читает некогда не берите образ bitnami/symfony
+        //Он отврититлен я уже везде пытался менять memory_limit но это не помогло судя по документации они сами не знают где его надо поменять чтоб заработало
         $file = new File();
         $form = $this->createFormBuilder($file)
             ->add('attachment', FileType::class)
